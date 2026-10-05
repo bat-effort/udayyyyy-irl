@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#050505">
+<title>bat-effort / owner console</title>
+<style>
+:root{
+  --bg:#050505;--panel:#0b0b0b;--panel2:#101010;--line:#242424;
+  --muted:#777;--text:#f5f5f5;--soft:#bdbdbd;--good:#c9f7d2;--danger:#ffb1a8;
+}
+*{box-sizing:border-box}
+html{background:var(--bg);color:var(--text);scroll-behavior:smooth}
+body{margin:0;background:
+ radial-gradient(circle at 75% 5%,rgba(255,255,255,.055),transparent 25rem),
+ radial-gradient(circle at 10% 80%,rgba(255,255,255,.025),transparent 30rem),
+ var(--bg);font-family:Inter,"Helvetica Neue",Helvetica,Arial,sans-serif;overflow-x:hidden}
+button,input{font:inherit}
+button{cursor:pointer}
+button:disabled{cursor:not-allowed;opacity:.5}
+.hidden{display:none!important}
+#app{min-height:100vh}
+.noise{position:fixed;inset:0;pointer-events:none;opacity:.035;z-index:0;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E")}
+
+.login{
+ min-height:100vh;display:grid;place-items:center;padding:28px;position:relative;overflow:hidden;
+}
+.login-card{
+ width:min(620px,100%);border:1px solid #292929;border-radius:34px;
+ background:linear-gradient(145deg,rgba(22,22,22,.94),rgba(6,6,6,.94));
+ box-shadow:0 40px 100px #000, inset 0 1px #ffffff0c;
+ padding:clamp(28px,6vw,62px);position:relative;z-index:2;overflow:hidden
+}
+.login-card:before{content:"";position:absolute;width:260px;height:260px;border-radius:50%;
+ background:radial-gradient(circle,#fff1,transparent 68%);right:-120px;top:-120px;pointer-events:none}
+.kicker{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#a7a7a7}
+.login h1{font-size:clamp(58px,11vw,112px);line-height:.82;letter-spacing:-.075em;font-weight:500;margin:52px 0 32px}
+.login p{color:#929292;font-size:18px;line-height:1.6;max-width:45ch}
+.field{margin-top:25px}
+.field label{display:block;font-size:12px;color:#999;margin-bottom:9px}
+.field input{
+ width:100%;height:58px;padding:0 17px;border:1px solid #303030;border-radius:16px;
+ background:#111;color:#fff;outline:none;transition:.2s
+}
+.field input:focus{border-color:#aaa;box-shadow:0 0 0 4px #fff0}
+.primary{
+ margin-top:24px;width:100%;height:60px;border:0;border-radius:17px;background:#fff;color:#000;
+ font-size:17px;font-weight:600;transition:transform .2s,box-shadow .2s
+}
+.primary:hover{transform:translateY(-2px);box-shadow:0 15px 35px #000}
+.error{color:var(--danger);font-size:13px;margin-top:13px;min-height:18px}
+
+.topbar{
+ position:sticky;top:0;z-index:20;border-bottom:1px solid #1d1d1d;
+ background:#050505d9;backdrop-filter:blur(18px);padding:15px max(22px,4vw);
+ display:flex;align-items:center;justify-content:space-between;gap:18px
+}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-mark{width:35px;height:35px;border:1px solid #444;border-radius:50%;display:grid;place-items:center;font-size:17px}
+.brand strong{display:block;font-size:13px;letter-spacing:.12em;text-transform:uppercase}
+.brand small{display:block;color:#666;font-size:10px;margin-top:3px;letter-spacing:.08em}
+.top-actions{display:flex;gap:8px}
+.ghost,.outline{
+ background:#0d0d0d;color:#ddd;border:1px solid #2c2c2c;border-radius:12px;padding:10px 13px
+}
+.ghost:hover,.outline:hover{background:#171717;border-color:#555}
+
+.shell{width:min(1440px,calc(100% - 34px));margin:auto;padding:42px 0 80px;position:relative;z-index:1}
+.hero{
+ min-height:270px;display:flex;align-items:flex-end;justify-content:space-between;gap:40px;
+ padding:30px 0 46px;position:relative
+}
+.hero h1{font-size:clamp(52px,8vw,118px);line-height:.84;letter-spacing:-.075em;font-weight:500;margin:12px 0 0}
+.hero p{color:#777;margin:20px 0 0;font-size:14px}
+.hero-meta{text-align:right;color:#777;font-size:11px;line-height:1.7}
+.hero-meta b{color:#ddd;font-weight:500}
+
+.bat-stage{position:absolute;right:2vw;top:0;width:180px;height:180px;perspective:800px;pointer-events:none;opacity:.9}
+.bat3d{position:absolute;left:50%;top:50%;width:84px;height:44px;transform-style:preserve-3d;transform:translate(-50%,-50%) rotateX(8deg);filter:drop-shadow(0 18px 18px #000)}
+.bat-body{position:absolute;left:35px;top:15px;width:14px;height:20px;background:#ddd;border-radius:8px 8px 5px 5px;transform:translateZ(12px)}
+.bat-wing{position:absolute;top:5px;width:45px;height:34px;background:#ddd;transform-origin:100% 80%;clip-path:polygon(100% 55%,78% 25%,60% 48%,38% 12%,18% 40%,0 18%,9% 72%,45% 86%,72% 78%);opacity:.9}
+.bat-wing.left{left:-3px;transform:rotateY(8deg) rotateZ(7deg)}
+.bat-wing.right{right:-3px;transform:scaleX(-1) rotateY(8deg) rotateZ(7deg)}
+.bat-ear{position:absolute;top:8px;width:7px;height:10px;background:#ddd;clip-path:polygon(50% 0,100% 100%,0 100%)}
+.bat-ear.left{left:36px}.bat-ear.right{left:45px}
+@keyframes flap{50%{transform:rotateY(-8deg) rotateZ(-9deg) scaleY(.82)}}
+.bat-wing{animation:flap 1.2s ease-in-out infinite}
+
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.card{
+ min-height:165px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(145deg,#101010,#080808);
+ padding:21px;position:relative;overflow:hidden;transition:transform .3s,border-color .3s
+}
+.card:hover{transform:translateY(-4px) perspective(700px) rotateX(2deg) rotateY(-2deg);border-color:#444}
+.card:after{content:"";position:absolute;width:120px;height:120px;border-radius:50%;right:-70px;bottom:-70px;background:#fff0;box-shadow:0 0 80px #fff1}
+.label{font-size:10px;letter-spacing:.17em;text-transform:uppercase;color:#777}
+.num{font-size:clamp(38px,5vw,66px);letter-spacing:-.06em;margin-top:27px;font-weight:500}
+.sub{font-size:12px;color:#666;margin-top:7px}
+.status-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#777;margin-right:7px}
+.status-dot.good{background:#c8f7d1;box-shadow:0 0 12px #c8f7d1}
+
+.grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(330px,.75fr);gap:10px;margin-top:10px}
+.panel{border:1px solid var(--line);border-radius:20px;background:#090909;overflow:hidden}
+.panel-head{padding:20px 21px;border-bottom:1px solid #1d1d1d;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.panel-head h2{font-size:13px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;margin:0}
+.panel-head span{font-size:11px;color:#666}
+.search{background:#0e0e0e;border:1px solid #2a2a2a;color:#eee;border-radius:10px;padding:9px 11px;width:180px;outline:none}
+.search:focus{border-color:#666}
+.table-wrap{overflow:auto;max-height:560px}
+table{width:100%;border-collapse:collapse;min-width:680px}
+th,td{text-align:left;padding:15px 17px;border-bottom:1px solid #181818}
+th{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:#666;font-weight:500;position:sticky;top:0;background:#090909;z-index:2}
+td{font-size:12px;color:#ccc}
+td.muted{color:#666}
+.name{color:#fff;font-weight:500}
+.device{max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#777}
+.empty{text-align:center!important;color:#666!important;padding:45px!important}
+.delete{
+ border:1px solid #40221f;background:#170d0c;color:#ffb1a8;border-radius:8px;padding:6px 8px;font-size:10px
+}
+
+.rating-area{padding:22px}
+.rating-summary{display:flex;align-items:end;gap:12px;padding-bottom:22px;border-bottom:1px solid #1b1b1b}
+.rating-big{font-size:70px;line-height:.8;letter-spacing:-.07em}
+.stars{letter-spacing:3px;font-size:17px}
+.rating-count{color:#777;font-size:11px}
+.bars{margin-top:23px;display:grid;gap:13px}
+.bar-row{display:grid;grid-template-columns:24px 1fr 35px;align-items:center;gap:9px;font-size:11px;color:#888}
+.track{height:7px;background:#1c1c1c;border-radius:99px;overflow:hidden}
+.fill{height:100%;background:#eee;border-radius:99px;width:0;transition:width .7s}
+.quick{margin-top:20px;padding-top:20px;border-top:1px solid #1b1b1b;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.quick div{border:1px solid #202020;border-radius:12px;padding:13px;background:#0d0d0d}
+.quick b{display:block;font-size:20px}.quick span{font-size:10px;color:#666}
+
+.full{margin-top:10px}
+.activity{padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.activity-card{border:1px solid #1d1d1d;border-radius:14px;padding:17px;background:#0d0d0d}
+.activity-card h3{margin:0;font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:500}
+.activity-card p{margin:10px 0 0;color:#777;font-size:12px}
+.toolbar{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid #1b1b1b}
+.toolbar-left{display:flex;gap:8px;align-items:center}
+select{background:#0e0e0e;border:1px solid #2a2a2a;color:#bbb;border-radius:10px;padding:9px 10px;font-size:11px}
+.notice{font-size:11px;color:#666;padding:0 20px 18px}
+.toast{position:fixed;right:18px;bottom:18px;z-index:100;background:#f5f5f5;color:#000;border-radius:13px;padding:12px 15px;font-size:12px;box-shadow:0 15px 40px #000;transform:translateY(20px);opacity:0;pointer-events:none;transition:.25s}
+.toast.show{transform:none;opacity:1}
+@media(max-width:1000px){
+ .cards{grid-template-columns:repeat(2,1fr)}
+ .grid{grid-template-columns:1fr}
+ .bat-stage{opacity:.35}
+}
+@media(max-width:620px){
+ .shell{width:calc(100% - 22px);padding-top:22px}
+ .hero{min-height:300px;display:block;padding-top:15px}
+ .hero-meta{text-align:left;margin-top:25px}
+ .bat-stage{right:-35px;top:10px;transform:scale(.75);opacity:.22}
+ .cards{grid-template-columns:1fr 1fr}
+ .card{min-height:130px;padding:16px}
+ .num{font-size:38px;margin-top:21px}
+ .grid{gap:8px}.panel-head{align-items:flex-start;flex-direction:column}
+ .search{width:100%}.activity{grid-template-columns:1fr}
+ .topbar{padding:12px 13px}.brand small{display:none}
+ .top-actions .outline{display:none}
+ .login{padding:14px}.login-card{border-radius:27px;padding:27px 23px}
+ .login h1{font-size:62px;margin-top:45px}
+}
+@media(max-width:390px){.cards{grid-template-columns:1fr}.card{min-height:125px}}
+</style>
+</head>
+<body>
+<div class="noise"></div>
+
+<section class="login" id="login">
+  <div class="login-card">
+    <div class="kicker">🦇 bat-effort / owner console</div>
+    <h1>private<br>side.</h1>
+    <p>This is the hidden control room for <b>udayyyyy.irl</b>. Sign in with your Supabase owner account to view private visitor and rating data.</p>
+    <form id="loginForm">
+      <div class="field"><label>Email</label><input id="email" type="email" autocomplete="username" required></div>
+      <div class="field"><label>Password</label><input id="password" type="password" autocomplete="current-password" required></div>
+      <button class="primary" id="loginBtn">Enter dashboard →</button>
+      <div class="error" id="loginError"></div>
+    </form>
+  </div>
+</section>
+
+<div id="app" class="hidden">
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-mark">🦇</div>
+    <div><strong>Owner Console</strong><small>udayyyyy.irl / private side</small></div>
+  </div>
+  <div class="top-actions">
+    <button class="outline" id="exportBtn">export CSV ↗</button>
+    <button class="ghost" id="refreshBtn">refresh ↻</button>
+    <button class="ghost" id="logoutBtn">log out</button>
+  </div>
+</header>
+
+<main class="shell">
+<section class="hero">
+  <div>
+    <div class="kicker">owner / live control room</div>
+    <h1>the hidden<br>side.</h1>
+    <p>Private visitor + Spider Clock rating intelligence.</p>
+  </div>
+  <div class="hero-meta">
+    <div>DATABASE <b id="dbStatus">checking…</b></div>
+    <div>LAST UPDATE <b id="updated">—</b></div>
+  </div>
+  <div class="bat-stage" id="batStage" aria-hidden="true">
+    <div class="bat3d" id="bat3d">
+      <div class="bat-wing left"></div><div class="bat-wing right"></div>
+      <div class="bat-ear left"></div><div class="bat-ear right"></div><div class="bat-body"></div>
+    </div>
+  </div>
+</section>
+
+<section class="cards">
+  <div class="card"><div class="label">Visitors</div><div class="num" id="visitorCount">—</div><div class="sub">recorded entries</div></div>
+  <div class="card"><div class="label">Today</div><div class="num" id="todayCount">—</div><div class="sub">visitor entries today</div></div>
+  <div class="card"><div class="label">Ratings</div><div class="num" id="ratingCount">—</div><div class="sub">Spider Clock ratings</div></div>
+  <div class="card"><div class="label">Average</div><div class="num" id="average">—</div><div class="sub">out of 5</div></div>
+</section>
+
+<section class="grid">
+  <div class="panel">
+    <div class="panel-head"><h2>Recent visitors</h2><input class="search" id="visitorSearch" placeholder="search name…"></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Name</th><th>Visited</th><th>Page</th><th>Device / browser</th><th></th></tr></thead>
+      <tbody id="visitorRows"><tr><td colspan="5" class="empty">loading…</td></tr></tbody>
+    </table></div>
+    <div class="notice">Visitor data shown here is whatever your public site records in the <b>visitors</b> table.</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><h2>Spider Clock</h2><span>rating intelligence</span></div>
+    <div class="rating-area">
+      <div class="rating-summary">
+        <div class="rating-big" id="ratingBig">—</div>
+        <div><div class="stars" id="ratingStars">☆☆☆☆☆</div><div class="rating-count" id="ratingCountText">— ratings</div></div>
+      </div>
+      <div class="bars">
+        <div class="bar-row"><span>5</span><div class="track"><div class="fill" id="bar5"></div></div><span id="c5">0</span></div>
+        <div class="bar-row"><span>4</span><div class="track"><div class="fill" id="bar4"></div></div><span id="c4">0</span></div>
+        <div class="bar-row"><span>3</span><div class="track"><div class="fill" id="bar3"></div></div><span id="c3">0</span></div>
+        <div class="bar-row"><span>2</span><div class="track"><div class="fill" id="bar2"></div></div><span id="c2">0</span></div>
+        <div class="bar-row"><span>1</span><div class="track"><div class="fill" id="bar1"></div></div><span id="c1">0</span></div>
+      </div>
+      <div class="quick">
+        <div><b id="fiveCount">0</b><span>FIVE STAR</span></div>
+        <div><b id="oneCount">0</b><span>ONE STAR</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="panel full">
+  <div class="toolbar">
+    <div class="toolbar-left"><h2 style="font-size:13px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;margin:0">Private ratings</h2>
+      <select id="ratingFilter"><option value="all">all ratings</option><option value="5">5 stars</option><option value="4">4 stars</option><option value="3">3 stars</option><option value="2">2 stars</option><option value="1">1 star</option></select>
+    </div>
+    <input class="search" id="ratingSearch" placeholder="search visitor…">
+  </div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Rating</th><th>Visitor</th><th>Date</th><th>Project</th><th></th></tr></thead>
+    <tbody id="ratingRows"><tr><td colspan="5" class="empty">loading…</td></tr></tbody>
+  </table></div>
+</section>
+
+<section class="grid full">
+  <div class="panel">
+    <div class="panel-head"><h2>System</h2><span>connection</span></div>
+    <div class="activity">
+      <div class="activity-card"><h3>Supabase</h3><p><span class="status-dot" id="dot"></span><span id="systemText">checking connection…</span></p></div>
+      <div class="activity-card"><h3>Session</h3><p id="sessionText">authenticated owner</p></div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-head"><h2>Owner note</h2><span>private</span></div>
+    <div class="activity"><div class="activity-card"><h3>Privacy</h3><p>Keep this admin URL private. Individual visitor and rating rows should remain protected by Supabase RLS.</p></div></div>
+  </div>
+</section>
+</main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL="https://mrwqsagsyyelcclhqjfp.supabase.co";
+const SUPABASE_KEY="sb_publishable_Uwu7LLy1vVoEdMS6K-l2aA_4Elzp4MV";
+const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const $=s=>document.querySelector(s);
+let visitors=[],ratings=[];
+
+const esc=v=>String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+const fmtDate=v=>{if(!v)return"—";const d=new Date(v);return isNaN(d)?"—":d.toLocaleString([], {year:"numeric",month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"});};
+const todayLocal=()=>{const d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate());};
+function device(ua){
+  ua=String(ua||"");
+  const os=/Android/i.test(ua)?"Android":/iPhone|iPad|iPod/i.test(ua)?"iOS":/Windows/i.test(ua)?"Windows":/Mac OS X/i.test(ua)?"macOS":/Linux/i.test(ua)?"Linux":"Unknown OS";
+  const browser=/Edg\//i.test(ua)?"Edge":/Chrome\//i.test(ua)?"Chrome":/Firefox\//i.test(ua)?"Firefox":/Safari\//i.test(ua)&&!/Chrome/i.test(ua)?"Safari":/SamsungBrowser/i.test(ua)?"Samsung Internet":"Browser";
+  return os+" · "+browser;
+}
+function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2600)}
+function stars(n){return "★★★★★".slice(0,n)+"☆☆☆☆☆".slice(0,5-n)}
+
+async function loadAll(){
+  $("#dbStatus").textContent="loading…";
+  try{
+    const [v,r]=await Promise.all([
+      db.from("visitors").select("id,visited_at,name,page,user_agent").order("visited_at",{ascending:false}).limit(1000),
+      db.from("ratings").select("id,project_id,visitor_name,rating,rated_at").eq("project_id","spider-clock").order("rated_at",{ascending:false}).limit(1000)
+    ]);
+    if(v.error)throw v.error;
+    if(r.error)throw r.error;
+    visitors=v.data||[]; ratings=r.data||[];
+    render();
+    $("#dbStatus").textContent="online";
+    $("#systemText").textContent="connected · data loaded";
+    $("#dot").classList.add("good");
+    $("#updated").textContent=new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
+  }catch(e){
+    console.error(e);
+    $("#dbStatus").textContent="error";
+    $("#systemText").textContent=e.message||"could not load data";
+    $("#dot").classList.remove("good");
+    toast("Could not load dashboard data.");
+  }
+}
+
+function render(){
+  const today=todayLocal();
+  const todayN=visitors.filter(v=>new Date(v.visited_at)>=today).length;
+  const avg=ratings.length?ratings.reduce((s,r)=>s+Number(r.rating),0)/ratings.length:0;
+  $("#visitorCount").textContent=visitors.length;
+  $("#todayCount").textContent=todayN;
+  $("#ratingCount").textContent=ratings.length;
+  $("#average").textContent=ratings.length?avg.toFixed(1):"—";
+  $("#ratingBig").textContent=ratings.length?avg.toFixed(1):"—";
+  $("#ratingStars").textContent=ratings.length?stars(Math.round(avg)):"☆☆☆☆☆";
+  $("#ratingCountText").textContent=ratings.length+" rating"+(ratings.length===1?"":"s");
+  const counts={1:0,2:0,3:0,4:0,5:0};
+  ratings.forEach(r=>counts[r.rating]=(counts[r.rating]||0)+1);
+  for(let i=1;i<=5;i++){
+    $("#c"+i).textContent=counts[i];
+    $("#bar"+i).style.width=(ratings.length?(counts[i]/ratings.length*100):0)+"%";
+  }
+  $("#fiveCount").textContent=counts[5];
+  $("#oneCount").textContent=counts[1];
+  renderVisitors();
+  renderRatings();
+}
+
+function renderVisitors(){
+  const q=$("#visitorSearch").value.trim().toLowerCase();
+  const rows=visitors.filter(v=>(v.name||"").toLowerCase().includes(q)).slice(0,300);
+  $("#visitorRows").innerHTML=rows.length?rows.map(v=>`
+    <tr>
+      <td><span class="name">${esc(v.name)}</span></td>
+      <td>${esc(fmtDate(v.visited_at))}</td>
+      <td class="muted">${esc(v.page||"/")}</td>
+      <td><div class="device" title="${esc(v.user_agent||"")}">${esc(device(v.user_agent))}</div></td>
+      <td><button class="delete" data-delete-visitor="${esc(v.id)}">delete</button></td>
+    </tr>`).join(""):`<tr><td colspan="5" class="empty">no visitors found</td></tr>`;
+}
+function renderRatings(){
+  const q=$("#ratingSearch").value.trim().toLowerCase();
+  const filter=$("#ratingFilter").value;
+  const rows=ratings.filter(r=>(r.visitor_name||"").toLowerCase().includes(q)&&
+    (filter==="all"||String(r.rating)===filter)).slice(0,300);
+  $("#ratingRows").innerHTML=rows.length?rows.map(r=>`
+    <tr>
+      <td><span class="stars">${esc(stars(Number(r.rating)))}</span></td>
+      <td><span class="name">${esc(r.visitor_name)}</span></td>
+      <td>${esc(fmtDate(r.rated_at))}</td>
+      <td class="muted">${esc(r.project_id)}</td>
+      <td><button class="delete" data-delete-rating="${esc(r.id)}">delete</button></td>
+    </tr>`).join(""):`<tr><td colspan="5" class="empty">no ratings found</td></tr>`;
+}
+
+async function deleteVisitor(id){
+  if(!confirm("Delete this visitor record? This cannot be undone."))return;
+  const {error}=await db.from("visitors").delete().eq("id",id);
+  if(error){toast(error.message);return}
+  visitors=visitors.filter(v=>String(v.id)!==String(id));render();toast("Visitor record deleted.");
+}
+async function deleteRating(id){
+  if(!confirm("Delete this rating? This cannot be undone."))return;
+  const {error}=await db.from("ratings").delete().eq("id",id);
+  if(error){toast(error.message);return}
+  ratings=ratings.filter(r=>String(r.id)!==String(id));render();toast("Rating deleted.");
+}
+
+function csv(){
+  const lines=[["name","visited_at","page","user_agent"].join(",")];
+  visitors.forEach(v=>lines.push([v.name,v.visited_at,v.page,v.user_agent].map(x=>`"${String(x??"").replace(/"/g,'""')}"`).join(",")));
+  const blob=new Blob([lines.join("\n")],{type:"text/csv"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="udayyyyy-visitors.csv";a.click();URL.revokeObjectURL(a.href);
+}
+
+$("#loginForm").addEventListener("submit",async e=>{
+  e.preventDefault();$("#loginError").textContent="";$("#loginBtn").disabled=true;$("#loginBtn").textContent="signing in…";
+  const {error}=await db.auth.signInWithPassword({email:$("#email").value.trim(),password:$("#password").value});
+  if(error)$("#loginError").textContent=error.message;
+  $("#loginBtn").disabled=false;$("#loginBtn").textContent="Enter dashboard →";
+});
+$("#logoutBtn").addEventListener("click",async()=>{await db.auth.signOut();location.reload()});
+$("#refreshBtn").addEventListener("click",loadAll);
+$("#exportBtn").addEventListener("click",csv);
+$("#visitorSearch").addEventListener("input",renderVisitors);
+$("#ratingSearch").addEventListener("input",renderRatings);
+$("#ratingFilter").addEventListener("change",renderRatings);
+document.addEventListener("click",e=>{
+  const vb=e.target.closest("[data-delete-visitor]");if(vb)deleteVisitor(vb.dataset.deleteVisitor);
+  const rb=e.target.closest("[data-delete-rating]");if(rb)deleteRating(rb.dataset.deleteRating);
+});
+
+// Subtle 3D bat response to pointer movement.
+const stage=$("#batStage"),bat=$("#bat3d");
+window.addEventListener("pointermove",e=>{
+  if(!stage||!bat)return;
+  const r=stage.getBoundingClientRect(),x=(e.clientX-(r.left+r.width/2))/(r.width/2),y=(e.clientY-(r.top+r.height/2))/(r.height/2);
+  bat.style.transform=`translate(-50%,-50%) rotateX(${8-y*10}deg) rotateY(${x*14}deg) translateZ(${Math.abs(x)*8}px)`;
+},{passive:true});
+
+db.auth.getSession().then(({data})=>{
+  if(data.session){$("#login").classList.add("hidden");$("#app").classList.remove("hidden");$("#sessionText").textContent="authenticated · "+(data.session.user.email||"owner");loadAll();}
+});
+db.auth.onAuthStateChange((_event,session)=>{
+  if(session){$("#login").classList.add("hidden");$("#app").classList.remove("hidden");loadAll();}
+  else{$("#login").classList.remove("hidden");$("#app").classList.add("hidden")}
+});
+</script>
+</body>
+</html>
